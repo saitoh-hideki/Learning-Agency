@@ -245,12 +245,12 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-8 py-4">
           <div className="flex items-center justify-between">
             {/* 左側：ロゴとタイトル */}
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-md">
-                <Sparkles className="w-4 h-4 text-white" />
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-md opacity-80">
+                <Sparkles className="w-3 h-3 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold tracking-tight text-white">Learning Agency</h1>
+                <h1 className="text-xl font-medium tracking-tight text-white">Learning Agency</h1>
                 <p className="text-xs text-zinc-500 font-medium tracking-wide">Dashboard</p>
               </div>
             </div>
@@ -287,34 +287,30 @@ export default function Dashboard() {
       </header>
 
       {/* メインコンテンツ */}
-      <main className="max-w-7xl mx-auto px-8 py-20">
-        {/* ウェルカムセクション */}
-        <div className={`mb-32 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="mt-10 mb-4">
-            <h2 className="text-4xl font-semibold tracking-wide text-white mb-1">
-              Welcome to Learning Agency
-            </h2>
-            <p className="text-sm text-zinc-400 leading-relaxed tracking-wide">
-              あなたの探究と思索を広げる対話の場へ。
-            </p>
+      <main className="max-w-7xl mx-auto px-8 py-16">
+        {/* ウェルカムセクション - 最適化 */}
+        <div className={`mb-16 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div className="mb-6">
+            <h1 className="text-2xl font-medium text-white tracking-tight">Learning Agency</h1>
+            <p className="text-sm text-zinc-400 leading-snug mt-1">あなたの探究と思考を広げる対話の場へ。</p>
           </div>
         </div>
 
         {/* クイックアクション */}
-        <div className={`mb-40 transition-all duration-700 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="mb-12">
+        <div className={`mb-20 transition-all duration-700 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div className="mb-8">
             <p className="text-sm font-medium text-zinc-400 uppercase tracking-widest mb-2">Quick Access</p>
-            <h3 className="text-2xl font-semibold text-white">今すぐ使える</h3>
+            <h3 className="text-xl font-semibold text-white">今すぐ使える</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {quickActions.map((action, index) => (
               <div
                 key={action.id}
-                className={`group p-6 rounded-2xl bg-zinc-900/70 backdrop-blur-sm border border-zinc-700/30 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] transition-all duration-500 delay-${index * 100}`}
+                className={`group p-6 rounded-xl bg-zinc-900/80 backdrop-blur-sm border border-zinc-700/30 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] transition-all duration-500 delay-${index * 100}`}
               >
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shadow-md"
                     style={{ backgroundColor: action.accentColor }}
                   >
                     {action.icon}
@@ -333,22 +329,22 @@ export default function Dashboard() {
         </div>
 
         {/* セクション区切り */}
-        <div className="border-t border-zinc-800/50 mb-40" />
+        <div className="border-t border-zinc-800/50 mb-20" />
 
         {/* 学習モードセクション */}
         <div className={`transition-all duration-700 delay-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="mb-16">
+          <div className="mb-12">
             <p className="text-sm font-medium text-zinc-400 uppercase tracking-widest mb-2">Learning Modes</p>
-            <h2 className="text-2xl font-semibold text-white tracking-wider mb-1">
+            <h2 className="text-xl font-semibold text-white tracking-tight mb-1">
               9 Learning Modes
             </h2>
-            <p className="text-sm text-zinc-400 leading-relaxed">
+            <p className="text-sm text-zinc-400 leading-snug">
               OECD・UNESCOの学習観に基づく、知的探究と自己形成の空間。
             </p>
           </div>
 
           {/* 検索バー */}
-          <div className="mb-12">
+          <div className="mb-8">
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <input
@@ -356,42 +352,42 @@ export default function Dashboard() {
                 placeholder="Search Mode..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-zinc-900/70 border border-zinc-700/30 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 bg-zinc-900/80 border border-zinc-700/30 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
 
           {/* おすすめモード */}
           {searchQuery === "" && (
-            <div className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <Star className="w-5 h-5 text-yellow-400" />
+            <div className="mb-20">
+              <div className="flex items-center gap-3 mb-4">
+                <Star className="w-4 h-4 text-amber-400" />
                 <h3 className="text-lg font-semibold text-white">おすすめモード</h3>
-                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full font-medium">
+                <span className="text-xs bg-amber-400/20 text-amber-400 px-2 py-1 rounded-full font-medium">
                   はじめての人におすすめ
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {recommendedModes.map((modeId, index) => {
                   const mode = modes.find(m => m.id === modeId)
                   if (!mode) return null
                   return (
                     <div
                       key={mode.id}
-                      className="group p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden"
+                      className="group p-4 rounded-xl bg-gradient-to-br from-amber-400/10 to-orange-400/10 border border-amber-400/20 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden"
                       onClick={() => handleModeSelect(mode.id)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
+                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
                           {mode.emoji}
                         </div>
                         <div className="flex-1">
-                          <p className="text-[10px] uppercase tracking-widest text-yellow-400 font-medium">
+                          <p className="text-[10px] uppercase tracking-widest text-amber-400 font-medium">
                             {mode.englishLabel}
                           </p>
                           <h4 className="text-sm font-semibold text-white">{mode.name}</h4>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-yellow-400 opacity-70" />
+                        <ArrowRight className="w-4 h-4 text-amber-400 opacity-70" />
                       </div>
                     </div>
                   )
@@ -402,26 +398,26 @@ export default function Dashboard() {
 
           {/* 最近使ったモード */}
           {searchQuery === "" && (
-            <div className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <Clock className="w-5 h-5 text-cyan-400" />
+            <div className="mb-20">
+              <div className="flex items-center gap-3 mb-4">
+                <Clock className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-lg font-semibold text-white">最近使った</h3>
-                <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full font-medium">
+                <span className="text-xs bg-cyan-400/20 text-cyan-400 px-2 py-1 rounded-full font-medium">
                   続きから
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {recentModes.map((modeId, index) => {
                   const mode = modes.find(m => m.id === modeId)
                   if (!mode) return null
                   return (
                     <div
                       key={mode.id}
-                      className="group p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden"
+                      className="group p-4 rounded-xl bg-gradient-to-br from-cyan-400/10 to-blue-400/10 border border-cyan-400/20 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden"
                       onClick={() => handleModeSelect(mode.id)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
+                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
                           {mode.emoji}
                         </div>
                         <div className="flex-1">
@@ -439,71 +435,73 @@ export default function Dashboard() {
             </div>
           )}
           
-          {/* 全モードグリッド */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 gap-y-8">
-            {filteredModes.map((mode, index) => (
-              <div
-                key={mode.id}
-                className={`group bg-zinc-900/70 backdrop-blur-sm border border-zinc-700/30 rounded-2xl p-6 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden min-h-[240px] transition-all duration-500 delay-${index * 100} flex flex-col justify-between`}
-                onClick={() => handleModeSelect(mode.id)}
-              >
-                {/* 背景グラデーション */}
-                <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300"
-                  style={{ background: `linear-gradient(135deg, ${mode.accentColor}20, transparent)` }}
-                />
-                
-                <div className="relative flex flex-col h-full">
-                  {/* モードナンバーバッジ */}
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-cyan-700 text-white">
-                      {modes.findIndex(m => m.id === mode.id) + 1}/9 {mode.englishLabel.split(' ')[0].toUpperCase()}
-                    </span>
-                    {/* おすすめバッジ */}
-                    {recommendedModes.includes(mode.id) && (
-                      <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-yellow-500/20 text-yellow-400">
-                        ★ おすすめ
+          {/* 全モードグリッド - 構造強化 */}
+          <div className="mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredModes.map((mode, index) => (
+                <div
+                  key={mode.id}
+                  className={`group bg-zinc-900/80 backdrop-blur-sm border border-zinc-700/30 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden min-h-[220px] transition-all duration-500 delay-${index * 100} flex flex-col justify-between space-y-3`}
+                  onClick={() => handleModeSelect(mode.id)}
+                >
+                  {/* 背景グラデーション */}
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300"
+                    style={{ background: `linear-gradient(135deg, ${mode.accentColor}20, transparent)` }}
+                  />
+                  
+                  <div className="relative flex flex-col h-full space-y-3">
+                    {/* モードナンバーバッジ */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-cyan-700 text-white">
+                        {modes.findIndex(m => m.id === mode.id) + 1}/9 {mode.englishLabel.split(' ')[0].toUpperCase()}
                       </span>
-                    )}
-                  </div>
+                      {/* おすすめバッジ */}
+                      {recommendedModes.includes(mode.id) && (
+                        <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-amber-400/20 text-amber-400">
+                          ★ おすすめ
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
-                      {mode.emoji}
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
+                        {mode.emoji}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">
+                          {mode.englishLabel}
+                        </p>
+                        <h4 className="text-lg font-semibold text-white tracking-tight">
+                          {mode.name}
+                        </h4>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-zinc-400">
-                        {mode.englishLabel}
-                      </p>
-                      <h4 className="text-lg font-semibold text-white tracking-wide">
-                        {mode.name}
-                      </h4>
-                    </div>
+                    
+                    <p className="text-sm text-zinc-300 leading-snug flex-grow">
+                      {mode.shortDescription}
+                    </p>
                   </div>
                   
-                  <p className="text-sm text-zinc-300 mt-1 leading-snug flex-grow">
-                    {mode.shortDescription}
-                  </p>
-                </div>
-                
-                <div className="flex flex-col gap-3 mt-6">
-                  <div className="flex gap-2 text-xs text-gray-400">
-                    {mode.features.map((feature, index) => (
-                      <span
-                        key={index}
-                        className="bg-zinc-800 rounded-full px-2 py-0.5"
-                      >
-                        #{feature}
-                      </span>
-                    ))}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-wrap gap-1 text-xs text-cyan-400">
+                      {mode.features.map((feature, index) => (
+                        <span
+                          key={index}
+                          className="bg-zinc-800 rounded-full px-2 py-0.5"
+                        >
+                          #{feature}
+                        </span>
+                      ))}
+                    </div>
+                    <button className="text-sm bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 group-hover:scale-[1.02]">
+                      <span>開始する</span>
+                      <ArrowRight className="w-3 h-3 opacity-70" />
+                    </button>
                   </div>
-                  <button className="text-sm bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-1.5 rounded-full transition-all duration-200 flex items-center justify-center gap-2 group-hover:scale-[1.02]">
-                    <span>開始する</span>
-                    <ArrowRight className="w-3 h-3 opacity-70" />
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* 検索結果が0件の場合 */}
@@ -523,19 +521,19 @@ export default function Dashboard() {
         </div>
 
         {/* セクション区切り */}
-        <div className="border-t border-zinc-800/50 mb-40 mt-40" />
+        <div className="border-t border-zinc-800/50 mb-20 mt-20" />
 
         {/* 最近の活動 */}
         <div className={`transition-all duration-700 delay-600 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="mb-16">
+          <div className="mb-12">
             <p className="text-sm font-medium text-zinc-400 uppercase tracking-widest mb-2">Learning History</p>
-            <h3 className="text-2xl font-semibold text-white">
+            <h3 className="text-xl font-semibold text-white">
               最近の活動
               <span className="text-xs text-zinc-500 ml-3 font-normal">Recent Activity</span>
             </h3>
           </div>
           
-          <div className="p-16 rounded-3xl bg-zinc-900/70 backdrop-blur-sm border border-zinc-700/30 shadow-[0_1px_2px_rgba(255,255,255,0.05)] relative overflow-hidden">
+          <div className="p-16 rounded-3xl bg-zinc-900/80 backdrop-blur-sm border border-zinc-700/30 shadow-sm relative overflow-hidden">
             {/* 背景装飾 */}
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-50" />
             <div className="absolute top-10 right-10 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl" />
@@ -561,7 +559,7 @@ export default function Dashboard() {
       </main>
 
       {/* フッター */}
-      <footer className="mt-48 border-t border-gradient-to-r from-zinc-800/50 to-transparent bg-gradient-to-b from-transparent to-zinc-900/30">
+      <footer className="mt-32 border-t border-gradient-to-r from-zinc-800/50 to-transparent bg-gradient-to-b from-transparent to-zinc-900/30">
         <div className="max-w-7xl mx-auto px-8 py-12">
           <div className="flex items-center justify-center space-x-3 text-zinc-500 text-sm">
             <SparklesIcon className="w-5 h-5" />
