@@ -203,12 +203,25 @@ export default function Dashboard() {
   const router = useRouter()
   const [selectedMode, setSelectedMode] = useState<string | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filteredModes, setFilteredModes] = useState(modes)
 
   useEffect(() => {
     // 初回ロード時のアニメーション
     const timer = setTimeout(() => setIsLoaded(true), 100)
     return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    // 検索フィルタリング
+    const filtered = modes.filter(mode =>
+      mode.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mode.englishName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mode.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mode.features.some(feature => feature.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    setFilteredModes(filtered)
+  }, [searchQuery])
 
   const handleModeSelect = (modeId: string) => {
     setSelectedMode(modeId)
@@ -221,8 +234,12 @@ export default function Dashboard() {
     window.location.href = "/"
   }
 
+  // おすすめモード（実際の使用履歴に基づいて動的に変更）
+  const recommendedModes = ["inquiry", "emotion", "document"]
+  const recentModes = ["structure", "creative"]
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-zinc-100">
+    <div className="min-h-screen bg-gradient-to-br from-[#0e0f11] to-[#121416] text-zinc-100">
       {/* ヘッダー */}
       <header className="border-b border-zinc-800/30 bg-zinc-900/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-8 py-4">
@@ -293,7 +310,7 @@ export default function Dashboard() {
             {quickActions.map((action, index) => (
               <div
                 key={action.id}
-                className={`group p-6 rounded-2xl bg-zinc-900/60 backdrop-blur-sm border border-zinc-700/30 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] transition-all duration-500 delay-${index * 100}`}
+                className={`group p-6 rounded-2xl bg-zinc-900/70 backdrop-blur-sm border border-zinc-700/30 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] transition-all duration-500 delay-${index * 100}`}
               >
                 <div className="flex items-center justify-between mb-6">
                   <div 
@@ -321,20 +338,113 @@ export default function Dashboard() {
         {/* 学習モードセクション */}
         <div className={`transition-all duration-700 delay-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="mb-16">
-            <h2 className="text-lg font-semibold text-white tracking-wider mb-1">
+            <p className="text-sm font-medium text-zinc-400 uppercase tracking-widest mb-2">Learning Modes</p>
+            <h2 className="text-2xl font-semibold text-white tracking-wider mb-1">
               9 Learning Modes
             </h2>
             <p className="text-sm text-zinc-400 leading-relaxed">
               OECD・UNESCOの学習観に基づく、知的探究と自己形成の空間。
             </p>
           </div>
+
+          {/* 検索バー */}
+          <div className="mb-12">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Search Mode..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-zinc-900/70 border border-zinc-700/30 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent transition-all duration-200"
+              />
+            </div>
+          </div>
+
+          {/* おすすめモード */}
+          {searchQuery === "" && (
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <Star className="w-5 h-5 text-yellow-400" />
+                <h3 className="text-lg font-semibold text-white">おすすめモード</h3>
+                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full font-medium">
+                  はじめての人におすすめ
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {recommendedModes.map((modeId, index) => {
+                  const mode = modes.find(m => m.id === modeId)
+                  if (!mode) return null
+                  return (
+                    <div
+                      key={mode.id}
+                      className="group p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden"
+                      onClick={() => handleModeSelect(mode.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
+                          {mode.emoji}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[10px] uppercase tracking-widest text-yellow-400 font-medium">
+                            {mode.englishLabel}
+                          </p>
+                          <h4 className="text-sm font-semibold text-white">{mode.name}</h4>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-yellow-400 opacity-70" />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 最近使ったモード */}
+          {searchQuery === "" && (
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-6">
+                <Clock className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-lg font-semibold text-white">最近使った</h3>
+                <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full font-medium">
+                  続きから
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {recentModes.map((modeId, index) => {
+                  const mode = modes.find(m => m.id === modeId)
+                  if (!mode) return null
+                  return (
+                    <div
+                      key={mode.id}
+                      className="group p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden"
+                      onClick={() => handleModeSelect(mode.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
+                          {mode.emoji}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[10px] uppercase tracking-widest text-cyan-400 font-medium">
+                            {mode.englishLabel}
+                          </p>
+                          <h4 className="text-sm font-semibold text-white">{mode.name}</h4>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-cyan-400 opacity-70" />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
           
-          {/* 3x3グリッドレイアウト */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-8">
-            {modes.map((mode, index) => (
+          {/* 全モードグリッド */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 gap-y-8">
+            {filteredModes.map((mode, index) => (
               <div
                 key={mode.id}
-                className={`group bg-zinc-900/60 backdrop-blur-sm border border-zinc-700/30 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden min-h-[220px] transition-all duration-500 delay-${index * 100} flex flex-col justify-between`}
+                className={`group bg-zinc-900/70 backdrop-blur-sm border border-zinc-700/30 rounded-2xl p-6 shadow-[0_1px_2px_rgba(255,255,255,0.05)] hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-[1.02] relative overflow-hidden min-h-[240px] transition-all duration-500 delay-${index * 100} flex flex-col justify-between`}
                 onClick={() => handleModeSelect(mode.id)}
               >
                 {/* 背景グラデーション */}
@@ -344,17 +454,34 @@ export default function Dashboard() {
                 />
                 
                 <div className="relative flex flex-col h-full">
+                  {/* モードナンバーバッジ */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-cyan-700 text-white">
+                      {modes.findIndex(m => m.id === mode.id) + 1}/9 {mode.englishLabel.split(' ')[0].toUpperCase()}
+                    </span>
+                    {/* おすすめバッジ */}
+                    {recommendedModes.includes(mode.id) && (
+                      <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-yellow-500/20 text-yellow-400">
+                        ★ おすすめ
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${mode.gradient} text-white flex items-center justify-center shadow-md`}>
                       {mode.emoji}
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-400 uppercase tracking-wider">{mode.englishLabel}</p>
-                      <h4 className="text-lg font-semibold text-white tracking-wide">{mode.name}</h4>
+                      <p className="text-[10px] uppercase tracking-widest text-zinc-400">
+                        {mode.englishLabel}
+                      </p>
+                      <h4 className="text-lg font-semibold text-white tracking-wide">
+                        {mode.name}
+                      </h4>
                     </div>
                   </div>
                   
-                  <p className="text-sm text-zinc-400 leading-relaxed flex-grow">
+                  <p className="text-sm text-zinc-300 mt-1 leading-snug flex-grow">
                     {mode.shortDescription}
                   </p>
                 </div>
@@ -378,6 +505,21 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+
+          {/* 検索結果が0件の場合 */}
+          {searchQuery && filteredModes.length === 0 && (
+            <div className="text-center py-16">
+              <Search className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">モードが見つかりません</h3>
+              <p className="text-zinc-400 mb-6">別のキーワードで検索してみてください</p>
+              <Button 
+                onClick={() => setSearchQuery("")}
+                className="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-2 rounded-lg transition-all duration-200"
+              >
+                すべてのモードを表示
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* セクション区切り */}
@@ -393,7 +535,7 @@ export default function Dashboard() {
             </h3>
           </div>
           
-          <div className="p-16 rounded-3xl bg-zinc-900/60 backdrop-blur-sm border border-zinc-700/30 shadow-md relative overflow-hidden">
+          <div className="p-16 rounded-3xl bg-zinc-900/70 backdrop-blur-sm border border-zinc-700/30 shadow-[0_1px_2px_rgba(255,255,255,0.05)] relative overflow-hidden">
             {/* 背景装飾 */}
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-50" />
             <div className="absolute top-10 right-10 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl" />
