@@ -5,33 +5,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// キッズモード専用のシステムプロンプト（v2）
+const systemPrompt = `あなたは Reflector for Kids。子どもの好奇心を伸ばすフレンドリー AI。
+
+▼応答構成
+1. **褒め言葉＋絵文字1つ**。
+2. **わかりやすい説明（句点多め、1文20字以内）**。
+3. **楽しい問いかけ** : 2問。
+4. **次にやってみよう提案**。
+
+語尾は「〜だね！」「〜してみよう！」など元気に。
+
+基本ルール：
+• 1返信 ≒300-400字。1段落 3〜4文で改行。
+• 敬語だがフレンドリー。「です・ます」調。
+• 箇条書きを使う場合は "・" を使用。番号付けは半角数字+". "。
+• 強調は **太字** で。絵文字は Kids モードのみ可。
+• 最後に必ず1つ "ユーザーへの問い" で締める。`
+
 serve(async (req) => {
+  console.log('Kids mode function called')
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('Kids mode function called')
     const { sessionId, message, history } = await req.json()
-    console.log('Request data received:', { sessionId, messageLength: message.length, historyLength: history.length })
+    console.log('Request data received:', { sessionId, messageLength: message?.length, historyLength: history?.length })
 
-    // キッズモード専用のシステムプロンプト
-    const systemPrompt = `あなたは「Reflector」という名前の子ども向け対話パートナーです。キッズモードでは、子どもの好奇心を育むやさしい対話を提供します。
+    // 過去の対話履歴をフォーマット
+    const historyText = history.map((msg: any) => 
+      `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
+    ).join('\n')
 
-特徴：
-- 明るくシンプルな語り口：「すごいね！どんな気持ちだった？」
-- 短文と絵文字を活用
-- 感情調整で楽しい学びを
-- 子どもの好奇心を育む
+    // システムプロンプトに履歴と現在のメッセージを組み込み
+    const fullPrompt = `${systemPrompt}
 
 過去の対話履歴：
-${history.map((msg: any) => 
-  `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
-).join('\n')}
+${historyText}
 
 現在のユーザーのメッセージ：${message}
 
-上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。回答は日本語で、50-100文字程度で簡潔に。絵文字も適度に使用。`
+上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。`
 
     console.log('Calling OpenAI API')
     
@@ -45,7 +61,7 @@ ${history.map((msg: any) =>
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: fullPrompt },
           { role: 'user', content: message }
         ],
         stream: true,
@@ -54,7 +70,7 @@ ${history.map((msg: any) =>
       }),
     })
 
-    console.log('OpenAI response status:', response.status)
+    console.log('OpenAI response status:', response.status, response.statusText)
 
     if (!response.ok) {
       console.error('OpenAI API error:', response.status, response.statusText)
@@ -84,7 +100,8 @@ ${history.map((msg: any) =>
               break
             }
 
-            const chunk = decoder.decode(value)
+            chunkCount++
+            const chunk = decoder.decode(value, { stream: true })
             const lines = chunk.split('\n')
 
             for (const line of lines) {
@@ -102,12 +119,11 @@ ${history.map((msg: any) =>
                   const content = parsed.choices?.[0]?.delta?.content
                   
                   if (content) {
-                    chunkCount++
                     controller.enqueue(new TextEncoder().encode(content))
                   }
                 } catch (parseError) {
-                  // JSONパースエラーは無視して続行
                   console.log('JSON parse error, continuing')
+                  // JSONパースエラーは無視して続行
                 }
               }
             }
@@ -127,7 +143,6 @@ ${history.map((msg: any) =>
     })
 
     console.log('Returning streaming response')
-
     return new Response(stream, {
       headers: {
         ...corsHeaders,

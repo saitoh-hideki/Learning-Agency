@@ -5,33 +5,48 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// 目標モード専用のシステムプロンプト（v2）
+const systemPrompt = `あなたは Reflector。学習目標達成のコーチです。
+
+▼応答構成
+1. **目標の確認**。
+2. **SMART分解表** : S・M・A・R・T 各要素1行。
+3. **週次タスク3件**（箇条書き）。
+4. **モチベ維持問い** : 「達成後どう感じたい？」など1問。
+5. 締めの問い。
+
+基本ルール：
+• 1返信 ≒500字。1段落 3〜4文で改行。
+• 敬語だがフレンドリー。「です・ます」調。
+• 箇条書きを使う場合は "・" を使用。番号付けは半角数字+". "。
+• 強調は **太字** で。
+• 最後に必ず1つ "ユーザーへの問い" で締める。`
+
 serve(async (req) => {
+  console.log('Goal mode function called')
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('Goal mode function called')
     const { sessionId, message, history } = await req.json()
-    console.log('Request data received:', { sessionId, messageLength: message.length, historyLength: history.length })
+    console.log('Request data received:', { sessionId, messageLength: message?.length, historyLength: history?.length })
 
-    // 目標モード専用のシステムプロンプト
-    const systemPrompt = `あなたは「Reflector」という名前の目標管理パートナーです。目標モードでは、学習計画と実行支援をサポートします。
+    // 過去の対話履歴をフォーマット
+    const historyText = history.map((msg: any) => 
+      `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
+    ).join('\n')
 
-特徴：
-- 進捗管理型の対話：「今日の学び、5分だけやってみようか」
-- 学習の道筋を描く
-- 継続的な成長をサポート
-- 目標設定から実行支援まで
+    // システムプロンプトに履歴と現在のメッセージを組み込み
+    const fullPrompt = `${systemPrompt}
 
 過去の対話履歴：
-${history.map((msg: any) => 
-  `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
-).join('\n')}
+${historyText}
 
 現在のユーザーのメッセージ：${message}
 
-上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。回答は日本語で、150-250文字程度で実践的に。`
+上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。`
 
     console.log('Calling OpenAI API')
     
@@ -45,7 +60,7 @@ ${history.map((msg: any) =>
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: fullPrompt },
           { role: 'user', content: message }
         ],
         stream: true,
@@ -54,7 +69,7 @@ ${history.map((msg: any) =>
       }),
     })
 
-    console.log('OpenAI response status:', response.status)
+    console.log('OpenAI response status:', response.status, response.statusText)
 
     if (!response.ok) {
       console.error('OpenAI API error:', response.status, response.statusText)
@@ -84,7 +99,8 @@ ${history.map((msg: any) =>
               break
             }
 
-            const chunk = decoder.decode(value)
+            chunkCount++
+            const chunk = decoder.decode(value, { stream: true })
             const lines = chunk.split('\n')
 
             for (const line of lines) {
@@ -102,12 +118,11 @@ ${history.map((msg: any) =>
                   const content = parsed.choices?.[0]?.delta?.content
                   
                   if (content) {
-                    chunkCount++
                     controller.enqueue(new TextEncoder().encode(content))
                   }
                 } catch (parseError) {
-                  // JSONパースエラーは無視して続行
                   console.log('JSON parse error, continuing')
+                  // JSONパースエラーは無視して続行
                 }
               }
             }
@@ -127,7 +142,6 @@ ${history.map((msg: any) =>
     })
 
     console.log('Returning streaming response')
-
     return new Response(stream, {
       headers: {
         ...corsHeaders,

@@ -5,32 +5,53 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// ドキュメントモード専用のシステムプロンプト（v2）
+const systemPrompt = `あなたは Reflector。資料読解を支援するアナリスト AI です。
+
+▼応答構成
+1. **30字サマリー**。
+2. **要点3つ (箇条書き)**。
+3. **論拠/前提/想定読者** を短文で整理。
+4. **批判的問い×2**。
+5. 締めの問い。
+
+資料引用が必要な場合は「p.3-4 に記述あり」などページ参照を添える。
+
+基本ルール：
+• 1返信 ≒500字。1段落 3〜4文で改行。
+• 敬語だがフレンドリー。「です・ます」調。
+• 箇条書きを使う場合は "・" を使用。番号付けは半角数字+". "。
+• 強調は **太字** で。
+• 最後に必ず1つ "ユーザーへの問い" で締める。`
+
 serve(async (req) => {
+  console.log('Document mode function called')
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { sessionId, message, history } = await req.json()
+    console.log('Request data received:', { sessionId, messageLength: message?.length, historyLength: history?.length })
 
-    // ドキュメントモード専用のシステムプロンプト
-    const systemPrompt = `あなたは「Reflector」という名前のドキュメント理解パートナーです。ドキュメントモードでは、PDFや資料の内容を深く理解し、関連質問で理解を深めます。
+    // 過去の対話履歴をフォーマット
+    const historyText = history.map((msg: any) => 
+      `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
+    ).join('\n')
 
-特徴：
-- 専門解説風：「このPDFでは〜が述べられています」
-- 知識の海を航海する
-- 奥深い意味を解き明かす
-- 理解を次の次元へ押し上げる
+    // システムプロンプトに履歴と現在のメッセージを組み込み
+    const fullPrompt = `${systemPrompt}
 
 過去の対話履歴：
-${history.map((msg: any) => 
-  `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
-).join('\n')}
+${historyText}
 
 現在のユーザーのメッセージ：${message}
 
-上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。回答は日本語で、200-400文字程度で専門的に。`
+上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。`
 
+    console.log('Calling OpenAI API')
+    
     // OpenAI APIを呼び出し
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -41,7 +62,7 @@ ${history.map((msg: any) =>
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: fullPrompt },
           { role: 'user', content: message }
         ],
         stream: true,
@@ -50,30 +71,38 @@ ${history.map((msg: any) =>
       }),
     })
 
+    console.log('OpenAI response status:', response.status, response.statusText)
+
     if (!response.ok) {
+      console.error('OpenAI API error:', response.status, response.statusText)
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
     }
 
     if (!response.body) {
+      console.error('No response body from OpenAI')
       throw new Error('No response body from OpenAI')
     }
+
+    console.log('Creating streaming response')
 
     // ストリーミングレスポンスを返す
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body!.getReader()
         const decoder = new TextDecoder()
+        let chunkCount = 0
 
         try {
           while (true) {
             const { done, value } = await reader.read()
             
             if (done) {
-              console.log('OpenAI stream completed')
+              console.log('OpenAI stream completed, total chunks:', chunkCount)
               break
             }
 
-            const chunk = decoder.decode(value)
+            chunkCount++
+            const chunk = decoder.decode(value, { stream: true })
             const lines = chunk.split('\n')
 
             for (const line of lines) {
@@ -94,8 +123,8 @@ ${history.map((msg: any) =>
                     controller.enqueue(new TextEncoder().encode(content))
                   }
                 } catch (parseError) {
+                  console.log('JSON parse error, continuing')
                   // JSONパースエラーは無視して続行
-                  console.log('JSON parse error, continuing:', parseError)
                 }
               }
             }
@@ -114,6 +143,7 @@ ${history.map((msg: any) =>
       }
     })
 
+    console.log('Returning streaming response')
     return new Response(stream, {
       headers: {
         ...corsHeaders,
@@ -122,7 +152,7 @@ ${history.map((msg: any) =>
     })
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Function error:', error)
     return new Response(
       JSON.stringify({ error: String(error) }),
       {

@@ -109,7 +109,7 @@ export default function ChatPage() {
   const [selectionPosition, setSelectionPosition] = useState({ x: 0, y: 0 })
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // 思考促進メッセージの循環
   useEffect(() => {
@@ -146,6 +146,14 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // 自動高さ調整
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px` // 最大200px
+  }, [input])
 
   // セッション開始時の初期メッセージ
   useEffect(() => {
@@ -279,15 +287,16 @@ export default function ChatPage() {
     toggleReview()
     
     try {
-      const response = await fetch('/api/generate-review', {
+      // モード別のレビュー生成エッジファンクションを直接呼び出し
+      const response = await fetch(`https://vcmcincwurpiaqrgjdfv.supabase.co/functions/v1/generate-review-${modeId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjbWNpbmN3dXJwaWFxcmdqZGZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NjQ5NTAsImV4cCI6MjA2OTM0MDk1MH0.eY1KFdfENHYDwOukxapa7DHsE0xCrM9s08esKklj_T8`,
         },
         body: JSON.stringify({
-          messages: messages,
-          mode: mode.name,
-          sessionId: currentSessionId
+          sessionId: currentSessionId,
+          messages: messages
         }),
       })
 
@@ -295,21 +304,17 @@ export default function ChatPage() {
         throw new Error('Failed to generate review')
       }
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
+      const reviewData = await response.json()
+      
+      // レビューデータを構造化して表示
+      const reviewText = `## レビュー結果
 
-      if (reader) {
-        let accumulatedText = ""
-        
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          
-          const chunk = decoder.decode(value)
-          accumulatedText += chunk
-          setReviewText(accumulatedText)
-        }
-      }
+${Object.entries(reviewData).map(([key, value]) => {
+  const sectionTitle = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  return `### ${sectionTitle}\n\n${value}\n`
+}).join('\n')}`
+
+      setReviewText(reviewText)
     } catch (error) {
       console.error('Error generating review:', error)
       setReviewText("Error generating review. Please try again.")
@@ -445,10 +450,10 @@ export default function ChatPage() {
       <div className="flex flex-row min-h-[calc(100vh-64px)]">
         
         {/* メインチャットエリア */}
-        <div className="flex-grow pl-16 pr-[320px] pt-6 pb-36 space-y-6" style={{ paddingLeft: '64px' }}>
+        <div className="flex-grow pl-8 pr-0 md:pr-[320px] pt-4 pb-32 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             {/* メッセージエリア */}
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6">
               {messages.map((message, index) => (
                 <div
                   key={message.id}
@@ -459,14 +464,14 @@ export default function ChatPage() {
                 >
                   {message.role === 'user' ? (
                     // ユーザーメッセージ - 右寄せ
-                    <div className="self-end max-w-[65%] mr-[320px] bg-cyan-900/30 backdrop-blur-sm text-white text-sm font-medium rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] border border-cyan-800/20">
+                    <div className="self-end max-w-[65%] mr-0 md:mr-[320px] bg-cyan-700/70 backdrop-blur-sm text-white text-sm font-medium rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] border border-cyan-800/20">
                       <p className="leading-relaxed select-text">
                         {message.content}
                       </p>
                     </div>
                   ) : (
                     // Reflectorメッセージ - 左寄せ
-                    <div className="self-start max-w-[65%] ml-12 bg-zinc-800/60 backdrop-blur-sm rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] border border-zinc-700/30" style={{ marginLeft: '48px' }}>
+                    <div className="self-start max-w-[65%] ml-12 bg-zinc-800/60 backdrop-blur-sm rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.01] border border-zinc-700/30 shadow-sm" style={{ marginLeft: '48px' }}>
                       {/* Reflectorラベル */}
                       <div className="flex items-center space-x-2 mb-2 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
                         <span className="text-xs text-gray-400 font-medium tracking-wide">🧠 Reflector</span>
@@ -494,7 +499,7 @@ export default function ChatPage() {
               {/* ローディング状態 */}
               {isLoading && !isStreaming && (
                 <div className="flex justify-start animate-in fade-in-up duration-300">
-                  <div className="self-start max-w-[65%] ml-12 bg-zinc-800/60 backdrop-blur-sm rounded-xl px-4 py-3 shadow-sm border border-zinc-700/30" style={{ marginLeft: '48px' }}>
+                  <div className="self-start max-w-[65%] ml-12 bg-zinc-800/60 backdrop-blur-sm rounded-xl px-4 py-3 shadow-sm border border-zinc-700/30 shadow-sm" style={{ marginLeft: '48px' }}>
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="text-xs text-gray-400 font-medium tracking-wide">🧠 Reflector</span>
                       <div className="flex space-x-1">
@@ -514,18 +519,19 @@ export default function ChatPage() {
         </div>
 
         {/* 入力エリア - 下部固定 */}
-        <div className="fixed bottom-16 left-0 right-[320px] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/30 z-40" style={{ bottom: '64px' }}>
-          <div className="px-24 py-4" style={{ paddingLeft: '96px', paddingRight: '96px' }}>
-            <div className="max-w-4xl mx-auto">
+        <div className="fixed bottom-16 left-0 right-0 md:right-[320px] bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800/30 z-40">
+          <div className="px-12 py-6">
+            <div className="max-w-4xl ml-8" style={{ marginLeft: '32px' }}>
               <div className="relative">
-                <Input
+                <textarea
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Reflectorに思考を伝えてください…"
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-zinc-800/80 backdrop-blur-sm border-zinc-700/30 text-white placeholder-gray-500 text-sm leading-relaxed rounded-xl focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-all duration-200 hover:bg-zinc-800/90 shadow-md"
+                  rows={1}
+                  className="w-full resize-none rounded-xl bg-zinc-800/80 backdrop-blur-sm border border-zinc-700/30 text-white placeholder-gray-500 text-sm leading-relaxed px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/30 transition-all duration-200 hover:bg-zinc-800/90 shadow-md"
                   autoFocus
                 />
                 
@@ -533,7 +539,7 @@ export default function ChatPage() {
                 <Button
                   onClick={handleSendMessage}
                   disabled={!input.trim() || isLoading}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-500 hover:to-blue-600 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 rounded-lg px-3 py-1.5"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-500 hover:to-blue-600 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 rounded-lg px-3 py-1.5 z-10"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -546,7 +552,7 @@ export default function ChatPage() {
 
         {/* Reflective Notes サイドバー */}
         {!showReview && (
-          <aside className="fixed right-0 top-16 w-[320px] h-[calc(100vh-64px)] bg-zinc-950 border-l border-zinc-800/30 shadow-lg z-30 overflow-y-auto">
+          <aside className="hidden md:block fixed right-0 top-16 w-[320px] h-[calc(100vh-64px)] bg-zinc-950 border-l border-zinc-800/30 shadow-lg z-30 overflow-y-auto">
             <div className="p-6">
               <h2 className="text-lg font-semibold text-white mb-6 tracking-wide">REFLECTIVE NOTES</h2>
               <p className="text-xs text-gray-500 mb-6 font-medium">Pin important messages to create your reflective notes</p>

@@ -5,33 +5,50 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// 感情リフレクトモード専用のシステムプロンプト（v2）
+const systemPrompt = `あなたは Reflector。共感と内省を促すセラピー調 AI です。
+
+▼応答構成
+1. **感情の鏡映し** : 「○○と感じたのですね」など30字以内。
+2. **感情ラベリング提案** : 喜び/不安/悔しさ など適切な日本語感情語を1〜2語提示。
+3. **本質探求質問** : 「その価値観はいつ芽生えましたか？」等2問。
+4. **セルフケア提案1行**（必要時）。
+5. 締めの問い。
+
+落ち着いた語尾。「安心して大丈夫です」など安全確認を適宜。
+
+基本ルール：
+• 1返信 ≒500字。1段落 3〜4文で改行。
+• 敬語だがフレンドリー。「です・ます」調。
+• 箇条書きを使う場合は "・" を使用。番号付けは半角数字+". "。
+• 強調は **太字** で。
+• 最後に必ず1つ "ユーザーへの問い" で締める。`
+
 serve(async (req) => {
+  console.log('Emotion mode function called')
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('Emotion mode function called')
     const { sessionId, message, history } = await req.json()
-    console.log('Request data received:', { sessionId, messageLength: message.length, historyLength: history.length })
+    console.log('Request data received:', { sessionId, messageLength: message?.length, historyLength: history?.length })
 
-    // 感情リフレクトモード専用のシステムプロンプト
-    const systemPrompt = `あなたは「Reflector」という名前の感情リフレクトパートナーです。感情リフレクトモードでは、感情の鏡として共感的な応答を提供します。
+    // 過去の対話履歴をフォーマット
+    const historyText = history.map((msg: any) => 
+      `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
+    ).join('\n')
 
-特徴：
-- 感情調整型の対話：「その気持ち、よくわかります」
-- 感情の鏡として機能
-- 共感的で温かい応答
-- 感情の整理をサポート
+    // システムプロンプトに履歴と現在のメッセージを組み込み
+    const fullPrompt = `${systemPrompt}
 
 過去の対話履歴：
-${history.map((msg: any) => 
-  `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
-).join('\n')}
+${historyText}
 
 現在のユーザーのメッセージ：${message}
 
-上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。回答は日本語で、100-200文字程度で温かく。`
+上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。`
 
     console.log('Calling OpenAI API')
     
@@ -45,7 +62,7 @@ ${history.map((msg: any) =>
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: fullPrompt },
           { role: 'user', content: message }
         ],
         stream: true,
@@ -54,7 +71,7 @@ ${history.map((msg: any) =>
       }),
     })
 
-    console.log('OpenAI response status:', response.status)
+    console.log('OpenAI response status:', response.status, response.statusText)
 
     if (!response.ok) {
       console.error('OpenAI API error:', response.status, response.statusText)
@@ -84,7 +101,8 @@ ${history.map((msg: any) =>
               break
             }
 
-            const chunk = decoder.decode(value)
+            chunkCount++
+            const chunk = decoder.decode(value, { stream: true })
             const lines = chunk.split('\n')
 
             for (const line of lines) {
@@ -102,12 +120,11 @@ ${history.map((msg: any) =>
                   const content = parsed.choices?.[0]?.delta?.content
                   
                   if (content) {
-                    chunkCount++
                     controller.enqueue(new TextEncoder().encode(content))
                   }
                 } catch (parseError) {
-                  // JSONパースエラーは無視して続行
                   console.log('JSON parse error, continuing')
+                  // JSONパースエラーは無視して続行
                 }
               }
             }
@@ -127,7 +144,6 @@ ${history.map((msg: any) =>
     })
 
     console.log('Returning streaming response')
-
     return new Response(stream, {
       headers: {
         ...corsHeaders,

@@ -5,33 +5,48 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// リフレクションモード専用のシステムプロンプト（v2）
+const systemPrompt = `あなたは Reflector。経験の意味づけを支援する内省 AI です。
+
+▼応答構成
+1. **出来事要約（25字以内）**。
+2. **インサイト抽出3点**（箇条書き）。
+3. **メタ視点質問×2** : 「もし同じ状況を友人が…」等。
+4. **次に活かす1ステップ提案**。
+5. 締めの問い。
+
+基本ルール：
+• 1返信 ≒500字。1段落 3〜4文で改行。
+• 敬語だがフレンドリー。「です・ます」調。
+• 箇条書きを使う場合は "・" を使用。番号付けは半角数字+". "。
+• 強調は **太字** で。
+• 最後に必ず1つ "ユーザーへの問い" で締める。`
+
 serve(async (req) => {
+  console.log('Reflection mode function called')
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('Reflection mode function called')
     const { sessionId, message, history } = await req.json()
-    console.log('Request data received:', { sessionId, messageLength: message.length, historyLength: history.length })
+    console.log('Request data received:', { sessionId, messageLength: message?.length, historyLength: history?.length })
 
-    // リフレクションモード専用のシステムプロンプト
-    const systemPrompt = `あなたは「Reflector」という名前の振り返りパートナーです。リフレクションモードでは、過去の出来事の意味づけと気づきの抽出をサポートします。
+    // 過去の対話履歴をフォーマット
+    const historyText = history.map((msg: any) => 
+      `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
+    ).join('\n')
 
-特徴：
-- メタ認知型の対話：「その出来事から何を得ましたか？」
-- 過去を未来への糧に
-- 経験を智慧へと昇華
-- セッション記録から気づきを抽出
+    // システムプロンプトに履歴と現在のメッセージを組み込み
+    const fullPrompt = `${systemPrompt}
 
 過去の対話履歴：
-${history.map((msg: any) => 
-  `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
-).join('\n')}
+${historyText}
 
 現在のユーザーのメッセージ：${message}
 
-上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。回答は日本語で、200-300文字程度で振り返り的に。`
+上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。`
 
     console.log('Calling OpenAI API')
     
@@ -45,7 +60,7 @@ ${history.map((msg: any) =>
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: fullPrompt },
           { role: 'user', content: message }
         ],
         stream: true,
@@ -54,7 +69,7 @@ ${history.map((msg: any) =>
       }),
     })
 
-    console.log('OpenAI response status:', response.status)
+    console.log('OpenAI response status:', response.status, response.statusText)
 
     if (!response.ok) {
       console.error('OpenAI API error:', response.status, response.statusText)
@@ -84,7 +99,8 @@ ${history.map((msg: any) =>
               break
             }
 
-            const chunk = decoder.decode(value)
+            chunkCount++
+            const chunk = decoder.decode(value, { stream: true })
             const lines = chunk.split('\n')
 
             for (const line of lines) {
@@ -102,12 +118,11 @@ ${history.map((msg: any) =>
                   const content = parsed.choices?.[0]?.delta?.content
                   
                   if (content) {
-                    chunkCount++
                     controller.enqueue(new TextEncoder().encode(content))
                   }
                 } catch (parseError) {
-                  // JSONパースエラーは無視して続行
                   console.log('JSON parse error, continuing')
+                  // JSONパースエラーは無視して続行
                 }
               }
             }
@@ -127,7 +142,6 @@ ${history.map((msg: any) =>
     })
 
     console.log('Returning streaming response')
-
     return new Response(stream, {
       headers: {
         ...corsHeaders,

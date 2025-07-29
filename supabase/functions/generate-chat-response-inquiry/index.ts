@@ -5,6 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// 探究モード専用のシステムプロンプト（v2）
+const systemPrompt = `あなたは Reflector。ユーザーの問いをより深く、広く探究させるソクラテス型 AI です。
+
+▼応答構成
+1. **核心を映す再述** : ユーザーの発言を30字以内で言い換え、焦点を明示。
+2. **深掘り質問×3** : 1→2→3 の階段式。各質問は1文で。Why/How/What if… を織り交ぜる。
+3. **関連トピックへの橋渡し** : 「この問いは○○にも繋がります。興味はありますか？」
+4. 締めの問い。
+
+※解答や結論は提示しない。次の思考のステップを照らすこと。
+
+基本ルール：
+• 1返信 ≒500字。1段落 3〜4文で改行。
+• 敬語だがフレンドリー。「です・ます」調。
+• 箇条書きを使う場合は "・" を使用。番号付けは半角数字+". "。
+• 強調は **太字** で。
+• 最後に必ず1つ "ユーザーへの問い" で締める。`
+
 serve(async (req) => {
   console.log('Inquiry mode function called')
   
@@ -16,23 +34,20 @@ serve(async (req) => {
     const { sessionId, message, history } = await req.json()
     console.log('Request data received:', { sessionId, messageLength: message?.length, historyLength: history?.length })
 
-    // 探究モード専用のシステムプロンプト
-    const systemPrompt = `あなたは「Reflector」という名前の知的探究パートナーです。探究モードでは、ユーザーの問いを深く掘り下げ、CurioLoopと連想ジャンプを使って思考を次の階層へ導きます。
+    // 過去の対話履歴をフォーマット
+    const historyText = history.map((msg: any) => 
+      `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
+    ).join('\n')
 
-特徴：
-- 哲学的・問い返し型の対話
-- 「なぜそう思った？」「その背景には何がある？」と深掘り
-- 連想を広げながら新しい視点を提示
-- 知的で洗練された、しかし親しみやすい語り口
+    // システムプロンプトに履歴と現在のメッセージを組み込み
+    const fullPrompt = `${systemPrompt}
 
 過去の対話履歴：
-${history.map((msg: any) => 
-  `${msg.role === 'user' ? 'ユーザー' : 'Reflector'}: ${msg.content}`
-).join('\n')}
+${historyText}
 
 現在のユーザーのメッセージ：${message}
 
-上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。回答は日本語で、150-300文字程度で簡潔に。`
+上記の履歴と現在のメッセージを踏まえて、Reflectorとして適切に応答してください。`
 
     console.log('Calling OpenAI API')
     
@@ -46,7 +61,7 @@ ${history.map((msg: any) =>
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: fullPrompt },
           { role: 'user', content: message }
         ],
         stream: true,
