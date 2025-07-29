@@ -213,7 +213,7 @@ export default function Dashboard() {
   const handleModeSelect = (modeId: string) => {
     setSelectedMode(modeId)
     // チャットページに遷移
-    router.push("/chat")
+    router.push(`/chat/${modeId}`)
   }
 
   const handleLogout = () => {
@@ -250,9 +250,10 @@ export default function Dashboard() {
               <Button 
                 variant="ghost" 
                 size="sm" 
+                onClick={() => router.push('/review-stock')}
                 className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors duration-200 rounded-lg px-3 py-2 text-sm"
               >
-                <User className="w-4 h-4" />
+                <FileText className="w-4 h-4" />
               </Button>
               <div className="w-px h-6 bg-zinc-700 mx-2" />
               <Button 
