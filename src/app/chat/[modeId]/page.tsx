@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
   ArrowLeft, 
+  ArrowDown,
   Send, 
   FileText, 
   Download, 
@@ -147,6 +148,44 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // ストリーミング中も自動スクロール
+  useEffect(() => {
+    if (isStreaming) {
+      const scrollInterval = setInterval(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 100)
+      return () => clearInterval(scrollInterval)
+    }
+  }, [isStreaming])
+
+  // 最後のメッセージの内容が変更されたらスクロール
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage && lastMessage.role === 'assistant') {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }
+    }
+  }, [messages.length > 0 ? messages[messages.length - 1]?.content : null])
+
+  // レビュー表示時にもスクロール
+  useEffect(() => {
+    if (showReview) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 100)
+    }
+  }, [showReview])
+
+  // ローディング状態が変わった時にもスクロール
+  useEffect(() => {
+    if (!isLoading && !isStreaming) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 50)
+    }
+  }, [isLoading, isStreaming])
+
   // 自動高さ調整
   useEffect(() => {
     const el = inputRef.current
@@ -195,6 +234,10 @@ export default function ChatPage() {
     try {
       console.log('Starting chat request for mode:', modeId)
       
+      // AbortControllerでタイムアウト処理を追加
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60秒タイムアウト
+      
       // モード別のSupabase Edge Functionを呼び出し
       const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-chat-response-${modeId}`, {
         method: 'POST',
@@ -207,7 +250,10 @@ export default function ChatPage() {
           message: userMessage,
           history: messages
         }),
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId)
 
       console.log('Response received:', response.status, response.statusText)
 
@@ -222,6 +268,7 @@ export default function ChatPage() {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let fullResponse = ""
+      let lastUpdateTime = Date.now()
 
       console.log('Starting to read stream')
 
@@ -238,23 +285,38 @@ export default function ChatPage() {
           console.log('Received chunk:', chunk.length, 'characters')
           fullResponse += chunk
 
-          // リアルタイムでメッセージを更新
-          updateLastMessage(fullResponse)
+          // リアルタイムでメッセージを更新（頻繁すぎる更新を防ぐ）
+          const now = Date.now()
+          if (now - lastUpdateTime > 50) { // 50ms間隔で更新
+            updateLastMessage(fullResponse)
+            lastUpdateTime = now
+          }
         }
+        
+        // 最終更新
+        updateLastMessage(fullResponse)
       } catch (streamError) {
         console.error('Stream reading error:', streamError)
         if (fullResponse.trim()) {
-          updateLastMessage(fullResponse + "\n\n[応答が途中で中断されました。]")
+          updateLastMessage(fullResponse + "\n\n[応答が途中で中断されました。もう一度お試しください。]")
         } else {
-          updateLastMessage("ストリーミング中にエラーが発生しました。")
+          updateLastMessage("ストリーミング中にエラーが発生しました。もう一度お試しください。")
         }
       } finally {
-        reader.releaseLock()
+        try {
+          reader.releaseLock()
+        } catch (releaseError) {
+          console.log('Reader release error:', releaseError)
+        }
       }
 
     } catch (error) {
       console.error('Request error:', error)
-      updateLastMessage("申し訳ございません。応答の生成中にエラーが発生しました。もう一度お試しください。")
+      if (error instanceof Error && error.name === 'AbortError') {
+        updateLastMessage("応答がタイムアウトしました。もう一度お試しください。")
+      } else {
+        updateLastMessage("申し訳ございません。応答の生成中にエラーが発生しました。もう一度お試しください。")
+      }
     } finally {
       console.log('Request completed, resetting states')
       setLoading(false)
@@ -453,7 +515,16 @@ ${Object.entries(reviewData).map(([key, value]) => {
         <div className="flex-grow pl-8 pr-0 md:pr-[320px] pt-4 pb-32 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             {/* メッセージエリア */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 relative">
+              {/* スクロールボタン */}
+              <button
+                onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
+                className="fixed bottom-32 right-8 z-40 bg-zinc-800/80 hover:bg-zinc-700/80 text-white p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110 backdrop-blur-sm border border-zinc-700/30"
+                title="最新メッセージにスクロール"
+              >
+                <ArrowDown className="w-4 h-4" />
+              </button>
+              
               {messages.map((message, index) => (
                 <div
                   key={message.id}
@@ -495,6 +566,9 @@ ${Object.entries(reviewData).map(([key, value]) => {
                   )}
                 </div>
               ))}
+              
+              {/* スクロールターゲット */}
+              <div ref={messagesEndRef} />
               
               {/* ローディング状態 */}
               {isLoading && !isStreaming && (

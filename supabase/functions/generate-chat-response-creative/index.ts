@@ -64,8 +64,8 @@ ${historyText}
           { role: 'user', content: message }
         ],
         stream: true,
-        max_tokens: 500,
-        temperature: 0.9,
+        max_tokens: 600,
+        temperature: 0.7,
       }),
     })
 

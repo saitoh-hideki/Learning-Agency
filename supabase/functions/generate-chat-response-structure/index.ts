@@ -65,7 +65,7 @@ ${historyText}
         ],
         stream: true,
         max_tokens: 600,
-        temperature: 0.6,
+        temperature: 0.7,
       }),
     })
 
