@@ -605,7 +605,7 @@ ${Object.entries(reviewData).map(([key, value]) => {
                   placeholder="Reflectorに思考を伝えてください…"
                   disabled={isLoading}
                   rows={1}
-                  className="w-full resize-none rounded-xl bg-zinc-800/80 backdrop-blur-sm border border-zinc-700/30 text-white placeholder-gray-500 text-sm leading-relaxed px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/30 transition-all duration-200 hover:bg-zinc-800/90 shadow-md"
+                  className="w-full resize-none rounded-xl bg-zinc-800/80 backdrop-blur-sm border border-zinc-700/30 text-white placeholder-gray-500 text-base leading-relaxed px-6 py-4 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/30 transition-all duration-200 hover:bg-zinc-800/90 shadow-md min-h-[60px]"
                   autoFocus
                 />
                 
@@ -613,9 +613,9 @@ ${Object.entries(reviewData).map(([key, value]) => {
                 <Button
                   onClick={handleSendMessage}
                   disabled={!input.trim() || isLoading}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-500 hover:to-blue-600 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 rounded-lg px-3 py-1.5 z-10"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-500 hover:to-blue-600 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 rounded-lg px-4 py-2 z-10"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                 </Button>
               </div>
               
