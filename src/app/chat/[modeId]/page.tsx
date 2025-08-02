@@ -3,11 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useChatStore } from "@/lib/store"
-import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { 
-  ArrowLeft, 
   ArrowDown,
   Send, 
   FileText, 
@@ -15,9 +12,6 @@ import {
   Save,
   Sparkles,
   User,
-  Bot,
-  RotateCcw,
-  MessageSquare,
   X,
   Brain,
   Lightbulb,
@@ -25,12 +19,9 @@ import {
   BookOpen,
   Clock,
   Zap,
-  Eye,
   Heart,
-  Pin,
   Edit3,
-  Trash2,
-  Tag
+  Trash2
 } from "lucide-react"
 
 // モード定義
@@ -58,16 +49,6 @@ const reflectionMessages = [
   "洞察は、静寂の中で生まれる。"
 ]
 
-// 好奇心ジャンプカード
-const curiosityCards = [
-  "生成AIと創造性",
-  "倫理と技術革新のバランス", 
-  "人間中心設計とAI",
-  "学習の本質とテクノロジー",
-  "思考の可視化と理解",
-  "知識の構造化と発見"
-]
-
 export default function ChatPage() {
   const params = useParams()
   const router = useRouter()
@@ -92,22 +73,20 @@ export default function ChatPage() {
     setLoading,
     setStreaming,
     toggleReview,
-    setReview,
     updateLastMessage
   } = useChatStore()
 
   const [input, setInput] = useState("")
-  const [isGeneratingReview, setIsGeneratingReview] = useState(false)
-  const [reviewText, setReviewText] = useState("")
-  const [isReviewStreaming, setIsReviewStreaming] = useState(false)
-  const [currentReflectionMessage, setCurrentReflectionMessage] = useState("")
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
+  const [userHasScrolled, setUserHasScrolled] = useState(false)
   const [showPastSession, setShowPastSession] = useState(false)
-  const [pastSessionQuote, setPastSessionQuote] = useState("")
+  const [isReviewStreaming, setIsReviewStreaming] = useState(false)
+  const [reviewText, setReviewText] = useState("")
+  const [selectedText, setSelectedText] = useState("")
+  const [selectionPosition, setSelectionPosition] = useState({ x: 0, y: 0 })
+  const [showSelectionPopup, setShowSelectionPopup] = useState(false)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
-  const [selectedText, setSelectedText] = useState<string>("")
-  const [showSelectionPopup, setShowSelectionPopup] = useState(false)
-  const [selectionPosition, setSelectionPosition] = useState({ x: 0, y: 0 })
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -116,7 +95,7 @@ export default function ChatPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       const randomMessage = reflectionMessages[Math.floor(Math.random() * reflectionMessages.length)]
-      setCurrentReflectionMessage(randomMessage)
+      // setCurrentReflectionMessage(randomMessage) // この変数は削除されたため、ここでは削除
     }, 8000)
     return () => clearInterval(interval)
   }, [])
@@ -125,7 +104,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (messages.length > 2 && !isLoading && !showPastSession) {
       setTimeout(() => {
-        setPastSessionQuote("AIは人間の創造性を拡張する存在であり、その境界を探ることが私の問いです。")
+        // setPastSessionQuote("AIは人間の創造性を拡張する存在であり、その境界を探ることが私の問いです。") // この変数は削除されたため、ここでは削除
         setShowPastSession(true)
       }, 2000)
     }
@@ -336,11 +315,6 @@ export default function ChatPage() {
     }
   }
 
-  const handleCuriosityCardClick = (card: string) => {
-    setInput(card)
-    inputRef.current?.focus()
-  }
-
   const handleGenerateReview = async () => {
     if (messages.length === 0) return
     
@@ -400,13 +374,7 @@ ${Object.entries(reviewData).map(([key, value]) => {
     deleteMemoNote(noteId)
   }
 
-  const parseTags = (text: string): string[] => {
-    const tagRegex = /#(\w+)/g
-    const matches = text.match(tagRegex)
-    return matches ? matches.map(tag => tag.slice(1)) : []
-  }
-
-  // テキスト選択のグローバルハンドラー
+  // テキスト選択機能
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       const selection = window.getSelection()
@@ -754,7 +722,7 @@ ${Object.entries(reviewData).map(([key, value]) => {
                 📌 メモする
               </Button>
               <span className="text-xs text-gray-400 max-w-[200px] truncate font-medium">
-                "{selectedText}"
+                &quot;{selectedText}&quot;
               </span>
             </div>
           </div>
@@ -906,7 +874,7 @@ ${Object.entries(reviewData).map(([key, value]) => {
                           <h4 className="text-sm font-medium text-zinc-300 mb-2">Growth Opportunities</h4>
                           <div className="bg-zinc-900/40 rounded-lg p-3 border border-zinc-700/20">
                             <p className="text-sm text-zinc-300 leading-relaxed">
-                              "Consider exploring interdisciplinary connections and applying concepts to real-world scenarios for enhanced retention."
+                              &quot;Consider exploring interdisciplinary connections and applying concepts to real-world scenarios for enhanced retention.&quot;
                             </p>
                           </div>
                         </div>

@@ -2,7 +2,25 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { X, ChevronLeft, ChevronRight, Search, FileText, Brain, Heart, Users, Sparkles, ArrowRight } from "lucide-react"
+import { 
+  ArrowRight, 
+  ArrowLeft, 
+  Check,
+  Brain,
+  Heart,
+  Target,
+  BookOpen,
+  Zap,
+  User,
+  Lightbulb,
+  Clock,
+  Search,
+  FileText,
+  Users,
+  X,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react"
 
 interface Mode {
   id: string

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import LoginForm from "@/components/login-form"
 import { OnboardingGuide } from "@/components/onboarding-guide"
-import { MessageCircle, Sparkles } from "lucide-react"
+import { Sparkles } from "lucide-react"
 
 export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false)

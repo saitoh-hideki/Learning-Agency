@@ -4,7 +4,14 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Sparkles, ArrowRight, Eye, EyeOff, Info, BookOpen } from "lucide-react"
+import { 
+  Sparkles, 
+  ArrowRight, 
+  Eye, 
+  EyeOff, 
+  Info, 
+  BookOpen 
+} from "lucide-react"
 
 export default function LoginForm() {
   const router = useRouter()

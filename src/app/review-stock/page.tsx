@@ -9,11 +9,22 @@ import {
   ArrowLeft, 
   Search, 
   FileText, 
+  Download, 
+  Trash2, 
+  Edit3, 
+  Eye,
   Calendar,
-  Sparkles,
-  Filter,
-  Download,
-  Trash2
+  Clock,
+  Tag,
+  MessageCircle,
+  Brain,
+  Heart,
+  Target,
+  BookOpen,
+  Zap,
+  User,
+  Lightbulb,
+  Sparkles
 } from "lucide-react"
 
 interface ReviewStock {

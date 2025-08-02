@@ -1,9 +1,26 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, ArrowLeft, Settings, User, Sparkles, Search, FileText, Brain, Heart, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { 
+  ArrowLeft, 
+  Sparkles,
+  MessageCircle,
+  Brain,
+  Heart,
+  Target,
+  BookOpen,
+  Clock,
+  Zap,
+  User,
+  Lightbulb,
+  Search,
+  FileText,
+  Users,
+  Settings,
+  Send
+} from "lucide-react"
 
 interface Message {
   id: string

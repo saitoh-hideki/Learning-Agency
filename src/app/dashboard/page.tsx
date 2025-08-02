@@ -2,8 +2,39 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, FileText, Brain, Heart, Users, Sparkles, LogOut, Settings, User, ChevronRight, ArrowRight, MessageCircle, BookOpen, Target, Zap, Clock, TrendingUp, Lightbulb, Play, Star, Bookmark, Compass, Book, Sparkles as SparklesIcon, Home, BarChart3, Palette, RotateCcw, FileText as FileTextIcon, Wand2, Calendar, PenTool } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { 
+  ArrowRight, 
+  Plus,
+  Calendar,
+  Clock,
+  TrendingUp,
+  Users,
+  Activity,
+  BarChart3,
+  BookOpen,
+  MessageCircle,
+  Target,
+  Zap,
+  Lightbulb,
+  Bookmark,
+  Book,
+  Home,
+  Palette,
+  Search,
+  Heart,
+  FileText,
+  Brain,
+  Wand2,
+  RotateCcw,
+  PenTool,
+  Sparkles,
+  Settings,
+  Compass,
+  Play,
+  LogOut,
+  Star
+} from "lucide-react"
 
 interface Mode {
   id: string
@@ -61,7 +92,7 @@ const modes: Mode[] = [
     englishName: "Document Insight",
     description: "知識の海を航海する。PDFの奥深い意味を解き明かし、理解を次の次元へと押し上げます。",
     shortDescription: "知識の海を航海する。PDFの奥深い意味を解き明かし、理解を次の次元へと押し上げます。",
-    icon: <FileTextIcon className="w-5 h-5" />,
+    icon: <FileText className="w-5 h-5" />,
     color: "text-cyan-400",
     gradient: "from-[#22D3EE] to-[#3B82F6]",
     features: ["PDF要約", "出典提示", "関連質問"],
@@ -201,7 +232,6 @@ const quickActions = [
 
 export default function Dashboard() {
   const router = useRouter()
-  const [selectedMode, setSelectedMode] = useState<string | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredModes, setFilteredModes] = useState(modes)
@@ -224,7 +254,6 @@ export default function Dashboard() {
   }, [searchQuery])
 
   const handleModeSelect = (modeId: string) => {
-    setSelectedMode(modeId)
     // チャットページに遷移
     router.push(`/chat/${modeId}`)
   }
@@ -368,7 +397,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                {recommendedModes.map((modeId, index) => {
+                {recommendedModes.map((modeId) => {
                   const mode = modes.find(m => m.id === modeId)
                   if (!mode) return null
                   return (
@@ -407,7 +436,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {recentModes.map((modeId, index) => {
+                {recentModes.map((modeId) => {
                   const mode = modes.find(m => m.id === modeId)
                   if (!mode) return null
                   return (
@@ -562,7 +591,7 @@ export default function Dashboard() {
       <footer className="mt-32 border-t border-gradient-to-r from-zinc-800/50 to-transparent bg-gradient-to-b from-transparent to-zinc-900/30">
         <div className="max-w-7xl mx-auto px-8 py-12">
           <div className="flex items-center justify-center space-x-3 text-zinc-500 text-sm">
-            <SparklesIcon className="w-5 h-5" />
+            <Sparkles className="w-5 h-5" />
             <span className="font-medium tracking-wide">Learning Agency - OECD・UNESCOの学習観に基づく知的探究×自己形成</span>
           </div>
         </div>
